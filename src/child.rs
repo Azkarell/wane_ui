@@ -14,13 +14,13 @@ impl Element for Child {
     type Bundle = ();
 
     #[inline]
-    fn modify_node(&self, node: &mut Node, context: &UiContext) {}
+    fn modify_node(&self, _node: &mut Node, _context: &UiContext) {}
 
     #[inline]
-    fn create_bundle(&self, context: &UiContext) -> Self::Bundle {}
+    fn create_bundle(&self, _context: &UiContext) -> Self::Bundle {}
 
     #[inline]
-    fn register_observers(&self, entity_command: &mut EntityCommands, context: &UiContext) {}
+    fn register_observers(&self, _entity_command: &mut EntityCommands, _context: &UiContext) {}
 
     #[inline]
     fn spawn_children(&self, rcs: &mut RelatedSpawnerCommands<ChildOf>, context: Arc<UiContext>) {

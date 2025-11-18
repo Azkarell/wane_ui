@@ -14,6 +14,7 @@ pub enum TextSizing {
     Big,
     Small,
 }
+
 #[derive(Clone)]
 pub struct Text {
     pub text: String,

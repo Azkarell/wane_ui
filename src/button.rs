@@ -41,7 +41,7 @@ impl Element for Button {
     type Bundle = UiButton;
 
     #[inline]
-    fn create_bundle(&self, context: &UiContext) -> Self::Bundle {
+    fn create_bundle(&self, _context: &UiContext) -> Self::Bundle {
         UiButton
     }
 
@@ -72,7 +72,7 @@ impl Element for Button {
     }
 
     #[inline]
-    fn modify_node(&self, node: &mut Node, context: &UiContext) {}
+    fn modify_node(&self, _node: &mut Node, _context: &UiContext) {}
 }
 
 pub fn button_with_text<'a, F: Send + Sync, M: 'static>(

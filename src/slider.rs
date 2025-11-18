@@ -13,7 +13,7 @@ use bevy::{
     },
     log::info,
     math::Vec2,
-    ui::{BackgroundColor, InteractionDisabled, Node, Val, percent, px},
+    ui::{InteractionDisabled, Node, Val, percent, px},
     ui_widgets::{
         CoreSliderDragState, SetSliderValue, Slider as UiSlider, SliderRange, SliderThumb,
         SliderValue, SliderValueChange, TrackClick, ValueChange, slider_self_update,

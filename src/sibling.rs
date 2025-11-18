@@ -3,14 +3,14 @@ use crate::{Element, child::Child};
 impl Element for (Child, Child) {
     type Bundle = ();
 
-    fn modify_node(&self, node: &mut bevy::ui::Node, context: &super::UiContext) {}
+    fn modify_node(&self, _node: &mut bevy::ui::Node, _context: &super::UiContext) {}
 
-    fn create_bundle(&self, context: &super::UiContext) -> Self::Bundle {}
+    fn create_bundle(&self, _context: &super::UiContext) -> Self::Bundle {}
 
     fn register_observers(
         &self,
-        entity_command: &mut bevy::ecs::system::EntityCommands,
-        context: &super::UiContext,
+        _entity_command: &mut bevy::ecs::system::EntityCommands,
+        _context: &super::UiContext,
     ) {
     }
 
