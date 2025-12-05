@@ -1,8 +1,12 @@
 use std::sync::Arc;
 
-use bevy::ui::{Node, Val, percent};
+use bevy::{
+    ecs::{component::Component, query::Changed, system::Query},
+    math::Vec2,
+    ui::{Node, Val, percent},
+};
 
-use crate::{Element, UiContext};
+use crate::{Element, UiContext, scaled::Scaled};
 
 pub struct Sized<E: Element> {
     pub width: Val,
@@ -38,6 +42,7 @@ impl Element for () {
 
 impl Sized<()> {
     #[inline]
+    #[track_caller]
     pub fn empty_sized(width: Val, height: Val) -> Self {
         Self {
             width,
@@ -46,6 +51,7 @@ impl Sized<()> {
         }
     }
     #[inline]
+    #[track_caller]
     pub fn empty() -> Self {
         Self {
             width: Val::Auto,
@@ -55,6 +61,7 @@ impl Sized<()> {
     }
 
     #[inline]
+    #[track_caller]
     pub fn expand() -> Self {
         Self {
             width: percent(100),
@@ -66,6 +73,7 @@ impl Sized<()> {
 
 impl<E: Element> Sized<E> {
     #[inline]
+    #[track_caller]
     pub fn new(width: Val, height: Val, content: E) -> Self {
         Self {
             width,
@@ -74,6 +82,7 @@ impl<E: Element> Sized<E> {
         }
     }
     #[inline]
+    #[track_caller]
     pub fn expanded(content: E) -> Self {
         Self {
             width: percent(100),
@@ -84,11 +93,19 @@ impl<E: Element> Sized<E> {
 }
 
 impl<E: Element> Element for Sized<E> {
-    type Bundle = E::Bundle;
+    type Bundle = (ComputedSize, E::Bundle);
 
     #[inline]
     fn create_bundle(&self, context: &super::UiContext) -> Self::Bundle {
-        self.content.create_bundle(context)
+        (
+            ComputedSize {
+                original_height: self.height,
+                original_width: self.width,
+                computed_height: self.height,
+                computed_width: self.width,
+            },
+            self.content.create_bundle(context),
+        )
     }
 
     #[inline]
@@ -114,5 +131,22 @@ impl<E: Element> Element for Sized<E> {
         node.width = self.width;
         node.height = self.height;
         self.content.modify_node(node, context);
+    }
+}
+
+#[derive(Component)]
+pub struct ComputedSize {
+    pub original_width: Val,
+    pub original_height: Val,
+    pub computed_width: Val,
+    pub computed_height: Val,
+}
+
+pub(crate) fn update_node_on_size_change(
+    query: Query<(&mut Node, &ComputedSize), Changed<ComputedSize>>,
+) {
+    for (mut n, c) in query {
+        n.width = c.computed_width;
+        n.height = c.computed_height;
     }
 }

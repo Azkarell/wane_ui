@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{panic::Location, sync::Arc};
 
 use bevy::{
     ecs::{
@@ -23,9 +23,10 @@ pub struct Hover<E: Element> {
 
 impl<E: Element> Hover<E> {
     #[inline]
-    pub fn new<'a, F: Send + Sync, M: 'static>(on_hover: &'a F, content: E) -> Self
+    #[track_caller]
+    pub fn new<F: Send + Sync, M: 'static>(on_hover: F, content: E) -> Self
     where
-        &'a F: IntoObserverSystem<Insert, Hovered, M>,
+        F: IntoObserverSystem<Insert, Hovered, M> + Copy,
     {
         Self {
             on_hover: Box::new(on_hover.into_registration()),

@@ -1,8 +1,15 @@
-use std::sync::Arc;
+use std::{ops::Deref, panic::Location, sync::Arc};
 
 use bevy::{
-    asset::Handle,
-    ecs::{hierarchy::ChildOf, relationship::RelatedSpawnerCommands, system::EntityCommands},
+    asset::{Handle, uuid::Uuid, uuid_handle},
+    ecs::{
+        hierarchy::ChildOf,
+        observer::On,
+        relationship::RelatedSpawnerCommands,
+        resource::Resource,
+        system::{EntityCommands, Query, Res},
+    },
+    log::error,
     math::Rect,
     prelude::Image as UiImage,
     ui::{
@@ -11,21 +18,32 @@ use bevy::{
     },
 };
 
-use crate::{Element, IntoChild, UiContext, child::Child};
+use crate::{Element, IntoChild, UiContext, child::Child, events::Init};
 
 pub struct Image {
     pub child: Option<Child>,
-    pub handle: Option<Handle<UiImage>>,
+    pub handle: Handle<UiImage>,
     pub rect: Option<Rect>,
     pub image_mode: NodeImageMode,
 }
 
 impl Image {
     #[inline]
+    #[track_caller]
     pub fn new() -> Self {
         Self {
             child: None,
-            handle: None,
+            handle: Handle::default(),
+            rect: None,
+            image_mode: NodeImageMode::Auto,
+        }
+    }
+    #[inline]
+    #[track_caller]
+    pub fn new_with_handle(handle: Handle<UiImage>) -> Self {
+        Self {
+            child: None,
+            handle: handle,
             rect: None,
             image_mode: NodeImageMode::Auto,
         }
@@ -39,7 +57,7 @@ impl Image {
 
     #[inline]
     pub fn set_image(&mut self, handle: Handle<UiImage>) {
-        self.handle = Some(handle);
+        self.handle = handle;
     }
 }
 
@@ -50,7 +68,7 @@ impl Element for Image {
     fn create_bundle(&self, context: &UiContext) -> Self::Bundle {
         ImageNode {
             color: context.image_color,
-            image: self.handle.clone().unwrap_or(Handle::default()),
+            image: self.handle.clone(),
             texture_atlas: None,
             flip_x: false,
             flip_y: false,
@@ -72,4 +90,16 @@ impl Element for Image {
 
     #[inline]
     fn modify_node(&self, _node: &mut Node, _context: &UiContext) {}
+}
+
+pub fn init_image_from_resource<R: Resource + Deref<Target = Handle<bevy::prelude::Image>>>(
+    on: On<Init>,
+    mut query: Query<&mut ImageNode>,
+    image: Res<R>,
+) {
+    let Ok(mut image_node) = query.get_mut(on.entity) else {
+        error!("image node not found");
+        return;
+    };
+    image_node.image = (**image).clone()
 }

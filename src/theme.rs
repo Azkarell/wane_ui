@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{panic::Location, sync::Arc};
 
 use bevy::{
     asset::Handle,
@@ -41,6 +41,7 @@ pub struct Theme<E: Element> {
 
 impl<E: Element> Theme<E> {
     #[inline]
+    #[track_caller]
     pub fn new(content: E) -> Self {
         Self {
             image_color: None,
@@ -96,6 +97,7 @@ impl<E: Element> Theme<E> {
     #[inline]
     pub fn create_context(&self, other: &UiContext) -> UiContext {
         UiContext {
+            current_animator: other.current_animator.clone(),
             image_color: self.image_color.unwrap_or(other.image_color),
             highlight_color: self.highlight_color.unwrap_or(other.highlight_color),
             font: self.font.clone().unwrap_or(other.font.clone()),

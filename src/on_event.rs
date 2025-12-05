@@ -13,9 +13,10 @@ pub struct OnEvent<E: Element, Ev: EntityEvent> {
 
 impl<E: Element, Ev: EntityEvent> OnEvent<E, Ev> {
     #[inline]
-    pub fn new<'a, F: Send + Sync, M: 'static>(on_event: &'a F, content: E) -> Self
+    #[track_caller]
+    pub fn new<F: Send + Sync, M: 'static>(on_event: F, content: E) -> Self
     where
-        &'a F: IntoObserverSystem<Ev, (), M>,
+        F: IntoObserverSystem<Ev, (), M> + Copy,
     {
         Self {
             on_event: Box::new(on_event.into_registration()),

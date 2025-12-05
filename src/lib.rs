@@ -5,6 +5,7 @@ pub mod slider;
 
 pub mod absolute;
 pub mod aligned;
+pub mod animated;
 pub mod background;
 pub mod border;
 pub mod centered;
@@ -62,8 +63,8 @@ use bevy::{
 };
 
 use crate::{
-    checkbox::update_checkbox_style, child::Child, events::Init, slider::update_slider_style,
-    theme::Themed,
+    checkbox::update_checkbox_style, child::Child, events::Init, scaled::update_computed_size,
+    sized::update_node_on_size_change, slider::update_slider_style, theme::Themed,
 };
 
 #[derive(Default)]
@@ -123,6 +124,9 @@ impl Root {
         self.node = node;
         self
     }
+    pub fn set_root_node(&mut self, node: Node) {
+        self.node = node;
+    }
 }
 
 impl Default for Root {
@@ -148,6 +152,9 @@ impl Default for Root {
 impl<M: Component> MenuPlugin<M> {
     pub fn add_element<E: IntoChildElementSpawner>(&mut self, e: E) {
         self.root.add_element(e);
+    }
+    pub fn set_root_node(&mut self, node: Node) {
+        self.root.set_root_node(node);
     }
 }
 
@@ -175,6 +182,7 @@ impl<E: Element + 'static> IntoChild for E {
 
 pub trait Element: Send + Sync {
     type Bundle: Bundle;
+
     fn modify_node(&self, node: &mut Node, context: &UiContext);
     fn create_bundle(&self, context: &UiContext) -> Self::Bundle;
     fn register_observers(&self, entity_command: &mut EntityCommands, context: &UiContext);
@@ -195,6 +203,7 @@ pub struct UiContext {
     border_radius: BorderRadius,
     highlight_color: Color,
     image_color: Color,
+    current_animator: Option<Entity>,
 }
 
 #[derive(Resource)]
@@ -206,10 +215,10 @@ impl FromWorld for UiContext {
         let text_size = 12.0;
         let text_size_big = 34.0;
         let bg = Color::linear_rgba(0.0, 0.0, 0.3, 0.8);
-        let fg = Color::linear_rgb(1.0, 0.8, 0.8);
+        let fg = Color::linear_rgba(1.0, 0.8, 0.8, 1.0);
         let hg = Color::linear_rgba(0.2, 0.2, 0.3, 0.8);
         let border_thickness = px(2.0);
-        let text_c = Color::linear_rgb(0.3, 0.6, 0.2);
+        let text_c = Color::linear_rgba(0.3, 0.6, 0.2, 1.0);
         let border_c = Color::BLACK;
         Self {
             font: font.0.clone(),
@@ -224,7 +233,16 @@ impl FromWorld for UiContext {
             border_radius: BorderRadius::MAX,
             highlight_color: Color::linear_rgb(1.0, 0.0, 0.0),
             image_color: Color::WHITE,
+            current_animator: None,
         }
+    }
+}
+
+impl UiContext {
+    pub fn with_animator(self: Arc<UiContext>, entity: Option<Entity>) -> Arc<UiContext> {
+        let mut s = (*self).clone();
+        s.current_animator = entity;
+        Arc::new(s)
     }
 }
 
@@ -266,9 +284,19 @@ pub struct Menu<M: Component> {
     _pd: PhantomData<M>,
 }
 
-#[derive(Event, Default)]
+#[derive(Event)]
 pub struct MenuShowing<M: Component> {
+    entity: Entity,
     _pd: PhantomData<M>,
+}
+
+impl<M: Component> MenuShowing<M> {
+    pub fn new(entity: Entity) -> Self {
+        Self {
+            entity,
+            _pd: Default::default(),
+        }
+    }
 }
 
 impl<M: Component + Default> Plugin for MenuPlugin<M> {
@@ -284,6 +312,7 @@ impl<M: Component + Default> Plugin for MenuPlugin<M> {
             Update,
             show_menu_function::<M>.run_if(on_message::<ShowMenu<M>>),
         );
+
         app.insert_resource(menu);
         app.add_systems(Update, cleanup::<M>.run_if(on_message::<HideMenu<M>>));
         if !app.is_plugin_added::<SharedMenuStatePlugin>() {
@@ -304,6 +333,8 @@ impl Plugin for SharedMenuStatePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, update_slider_style);
         app.add_systems(Update, update_checkbox_style);
+        app.add_systems(Update, update_computed_size);
+        app.add_systems(Update, update_node_on_size_change);
         app.add_systems(
             Update,
             init_resource::<UiContext>.run_if(resource_added::<UiFont>),
@@ -312,8 +343,10 @@ impl Plugin for SharedMenuStatePlugin {
 }
 
 fn init_resource<R: Resource + FromWorld>(mut commands: Commands) {
+    info!("init resource");
     commands.init_resource::<R>();
 }
+
 fn show_menu_function<M: Component + Default>(
     mut commands: Commands,
     menu: Res<Menu<M>>,
@@ -321,6 +354,6 @@ fn show_menu_function<M: Component + Default>(
 ) {
     info!("showing menu");
     let arc = Arc::new(context.clone());
-    let _entity = menu.root.spawn::<M>(&mut commands, arc).id();
-    commands.trigger(MenuShowing::<M>::default())
+    let entity = menu.root.spawn::<M>(&mut commands, arc).id();
+    commands.trigger(MenuShowing::<M>::new(entity))
 }

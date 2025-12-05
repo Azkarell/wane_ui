@@ -10,6 +10,7 @@ pub struct Background<E: Element> {
 
 impl<E: Element> Background<E> {
     #[inline]
+    #[track_caller]
     pub fn new(content: E) -> Self {
         Background { content }
     }

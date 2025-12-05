@@ -1,6 +1,9 @@
-use std::sync::Arc;
+use std::{panic::Location, sync::Arc};
 
-use bevy::ui::{BorderColor, BorderRadius, Node, UiRect, px};
+use bevy::{
+    asset::ron::de,
+    ui::{BorderColor, BorderRadius, Node, UiRect, px},
+};
 
 use crate::{Element, UiContext};
 
@@ -13,6 +16,7 @@ pub struct Border<E: Element> {
 }
 
 impl Default for Border<()> {
+    #[track_caller]
     fn default() -> Self {
         Self {
             content: (),
@@ -26,6 +30,7 @@ impl Default for Border<()> {
 
 impl<E: Element> Border<E> {
     #[inline]
+    #[track_caller]
     pub fn all(content: E) -> Self {
         Self {
             content: content,
@@ -48,6 +53,7 @@ impl<E: Element> Border<E> {
     }
 
     #[inline]
+    #[track_caller]
     pub fn bottom(content: E) -> Self {
         Self {
             content,
@@ -59,6 +65,7 @@ impl<E: Element> Border<E> {
     }
 
     #[inline]
+    #[track_caller]
     pub fn top(content: E) -> Self {
         Self {
             content,
@@ -69,6 +76,7 @@ impl<E: Element> Border<E> {
         }
     }
     #[inline]
+    #[track_caller]
     pub fn right(content: E) -> Self {
         Self {
             content,
@@ -79,6 +87,7 @@ impl<E: Element> Border<E> {
         }
     }
     #[inline]
+    #[track_caller]
     pub fn left(content: E) -> Self {
         Self {
             content,

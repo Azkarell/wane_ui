@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{panic::Location, sync::Arc};
 
 use bevy::{
     color::Color,
@@ -36,6 +36,7 @@ pub struct Slider<E: Element> {
 
 impl Slider<()> {
     #[inline]
+    #[track_caller]
     pub fn new_default<'a, F: Send + Sync, M: 'static>(
         on_value_changed: &'a F,
         min: f32,
@@ -73,6 +74,7 @@ impl Slider<()> {
 
 impl<E: Element> Slider<E> {
     #[inline]
+    #[track_caller]
     pub fn new<'a, F: Send + Sync, M: 'static>(
         registration: &'a F,
         min: f32,
@@ -180,6 +182,7 @@ pub struct Thumb<E: Element> {
 }
 
 impl Thumb<()> {
+    #[track_caller]
     pub fn new_default() -> impl Element {
         Thumb {
             content: Theme::new(Absolute {

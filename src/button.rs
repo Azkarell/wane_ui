@@ -26,9 +26,10 @@ pub struct Button {
 
 impl Button {
     #[inline]
-    pub fn new<'a, F: Send + Sync, M: 'static, C: IntoChild>(on_click: &'a F, content: C) -> Self
+    #[track_caller]
+    pub fn new<F: Send + Sync, M: 'static, C: IntoChild>(on_click: F, content: C) -> Self
     where
-        &'a F: IntoObserverSystem<Activate, (), M>,
+        F: IntoObserverSystem<Activate, (), M> + Copy,
     {
         Self {
             on_click: Box::new(on_click.into_registration()),
@@ -75,21 +76,22 @@ impl Element for Button {
     fn modify_node(&self, _node: &mut Node, _context: &UiContext) {}
 }
 
-pub fn button_with_text<'a, F: Send + Sync, M: 'static>(
+#[track_caller]
+pub fn button_with_text<F: Send + Sync, M: 'static>(
     text: String,
     width: Val,
     height: Val,
-    on_click: &'a F,
+    on_click: F,
 ) -> impl Element
 where
-    &'a F: IntoObserverSystem<Activate, (), M>,
+    F: IntoObserverSystem<Activate, (), M> + Copy,
 {
     Sized {
         width,
         height,
         content: Centered {
             content: Button::new(
-                &on_click,
+                on_click,
                 Text {
                     text: text,
                     sizing: TextSizing::Big,

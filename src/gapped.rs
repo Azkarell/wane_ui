@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{panic::Location, sync::Arc};
 
 use bevy::{
     ecs::{hierarchy::ChildOf, relationship::RelatedSpawnerCommands, system::EntityCommands},
@@ -15,6 +15,7 @@ pub struct Gapped<E: Element> {
 
 impl<E: Element> Gapped<E> {
     #[inline]
+    #[track_caller]
     pub fn new(content: E) -> Self {
         Self {
             content,

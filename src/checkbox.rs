@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{panic::Location, sync::Arc};
 
 use bevy::{
     ecs::{
@@ -22,6 +22,7 @@ pub struct Checkbox<E: Element> {
     content: E,
 }
 impl Checkbox<()> {
+    #[track_caller]
     pub fn new_default<'a, F: Send + Sync, M: 'static>(on_change: &'a F) -> impl Element
     where
         &'a F: IntoObserverSystem<ValueChange<bool>, (), M>,
@@ -53,6 +54,7 @@ impl Checkbox<()> {
 
 impl<E: Element> Checkbox<E> {
     #[inline]
+    #[track_caller]
     pub fn new<'a, F: Send + Sync, M: 'static>(on_change: &'a F, content: E) -> Self
     where
         &'a F: IntoObserverSystem<ValueChange<bool>, (), M>,

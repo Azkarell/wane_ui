@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use bevy::ui::{Node, Val};
+use bevy::{
+    asset::ron::de,
+    ui::{Node, Val},
+};
 
 use crate::{Element, UiContext};
 
@@ -14,6 +17,7 @@ pub struct Positioned<E: Element> {
 
 impl<E: Element> Positioned<E> {
     #[inline]
+    #[track_caller]
     pub fn all(val: Val, content: E) -> Self {
         Self {
             left: val,
@@ -24,6 +28,7 @@ impl<E: Element> Positioned<E> {
         }
     }
     #[inline]
+    #[track_caller]
     pub fn left(val: Val, content: E) -> Self {
         Self {
             left: val,
@@ -35,6 +40,7 @@ impl<E: Element> Positioned<E> {
     }
 
     #[inline]
+    #[track_caller]
     pub fn right(val: Val, content: E) -> Self {
         Self {
             left: Val::Auto,
@@ -46,6 +52,7 @@ impl<E: Element> Positioned<E> {
     }
 
     #[inline]
+    #[track_caller]
     pub fn top(val: Val, content: E) -> Self {
         Self {
             left: Val::Auto,
@@ -57,6 +64,7 @@ impl<E: Element> Positioned<E> {
     }
 
     #[inline]
+    #[track_caller]
     pub fn bottom(val: Val, content: E) -> Self {
         Self {
             left: Val::Auto,

@@ -1,3 +1,5 @@
+use std::panic::Location;
+
 use bevy::{
     ecs::{hierarchy::ChildOf, relationship::RelatedSpawnerCommands, system::EntityCommands},
     ui::{AlignItems, Node},
@@ -7,14 +9,17 @@ use crate::{Element, UiContext};
 
 pub struct Aligned<E: Element> {
     pub content: E,
+
     pub align_items: AlignItems,
 }
 
 impl<E: Element> Aligned<E> {
     #[inline]
+    #[track_caller]
     pub fn new(content: E) -> Self {
         Self {
             content,
+
             align_items: AlignItems::Center,
         }
     }
