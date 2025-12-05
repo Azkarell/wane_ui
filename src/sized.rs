@@ -2,11 +2,10 @@ use std::sync::Arc;
 
 use bevy::{
     ecs::{component::Component, query::Changed, system::Query},
-    math::Vec2,
     ui::{Node, Val, percent},
 };
 
-use crate::{Element, UiContext, scaled::Scaled};
+use crate::{Element, UiContext};
 
 pub struct Sized<E: Element> {
     pub width: Val,

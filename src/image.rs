@@ -1,7 +1,7 @@
-use std::{ops::Deref, panic::Location, sync::Arc};
+use std::{ops::Deref, sync::Arc};
 
 use bevy::{
-    asset::{Handle, uuid::Uuid, uuid_handle},
+    asset::Handle,
     ecs::{
         hierarchy::ChildOf,
         observer::On,

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, iter::once, panic::Location};
+use std::{collections::HashMap, iter::once};
 
 use bevy::{
     animation::{
@@ -11,10 +11,10 @@ use bevy::{
         component::Component,
         entity::Entity,
         event::EntityEvent,
-        hierarchy::{ChildOf, Children},
+        hierarchy::Children,
         name::Name,
         observer::On,
-        system::{Commands, EntityCommands, Query, ResMut},
+        system::{Commands, Query, ResMut},
     },
     log::{error, info},
 };

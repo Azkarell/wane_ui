@@ -7,8 +7,8 @@ use bevy::{
         system::Query,
     },
     math::Vec2,
-    reflect::{Reflect, TypePath},
-    ui::{Node, Val},
+    reflect::Reflect,
+    ui::Node,
 };
 
 use crate::{Element, UiContext, sized::ComputedSize};

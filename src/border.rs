@@ -1,9 +1,6 @@
-use std::{panic::Location, sync::Arc};
+use std::sync::Arc;
 
-use bevy::{
-    asset::ron::de,
-    ui::{BorderColor, BorderRadius, Node, UiRect, px},
-};
+use bevy::ui::{BorderColor, BorderRadius, Node, UiRect, px};
 
 use crate::{Element, UiContext};
 
