@@ -41,10 +41,9 @@ use bevy::{
         bundle::Bundle,
         component::Component,
         entity::Entity,
-        event::Event,
         hierarchy::ChildOf,
         message::Message,
-        query::With,
+        query::{Added, With},
         relationship::RelatedSpawnerCommands,
         resource::Resource,
         schedule::{
@@ -56,15 +55,13 @@ use bevy::{
     },
     log::info,
     text::Font,
-    ui::{
-        AlignItems, BorderColor, BorderRadius, Display, JustifyContent, Node, PositionType, UiRect,
-        Val, px,
-    },
+    ui::{BorderColor, BorderRadius, Node, UiRect, px},
 };
 
 use crate::{
-    checkbox::update_checkbox_style, child::Child, events::Init, scaled::update_computed_size,
-    sized::update_node_on_size_change, slider::update_slider_style, theme::Themed,
+    centered::Centered, checkbox::update_checkbox_style, child::Child, events::Init,
+    scaled::update_computed_size, sized::update_node_on_size_change, slider::update_slider_style,
+    theme::Themed,
 };
 
 #[derive(Default)]
@@ -75,86 +72,36 @@ pub struct MenuPlugin<M: Component> {
 
 #[derive(Clone)]
 pub struct Root {
-    node: Node,
-    elements: Vec<Arc<Box<dyn ChildElementSpawner>>>,
-}
-
-impl Element for Root {
-    type Bundle = ();
-
-    #[inline]
-    fn modify_node(&self, node: &mut Node, _context: &UiContext) {
-        node.clone_from(&self.node);
-    }
-
-    #[inline]
-    fn create_bundle(&self, _context: &UiContext) -> Self::Bundle {}
-
-    #[inline]
-    fn register_observers(&self, _entity_command: &mut EntityCommands, _context: &UiContext) {}
-
-    #[inline]
-    fn spawn_children(&self, rcs: &mut RelatedSpawnerCommands<ChildOf>, context: Arc<UiContext>) {
-        for c in &self.elements {
-            c.spawn(rcs, context.clone());
-        }
-    }
+    root_element: Arc<Box<dyn ChildElementSpawner>>,
 }
 
 impl Root {
-    pub fn spawn<'a, M: Component + Default>(
-        &self,
-        commands: &'a mut Commands,
-        context: Arc<UiContext>,
-    ) -> EntityCommands<'a> {
-        let mut entity = commands.spawn((M::default(), self.node.clone()));
-        entity.with_children(|rsc| {
-            for es in &self.elements {
-                es.spawn(rsc, context.clone());
-            }
-        });
-        entity
-    }
-
-    pub fn add_element<E: IntoChildElementSpawner>(&mut self, e: E) {
-        self.elements.push(Arc::new(e.into_element_spawner()));
-    }
-
-    pub fn with_root_node(mut self, node: Node) -> Self {
-        self.node = node;
+    pub fn with_root_node<E: IntoChildElementSpawner>(mut self, element: E) -> Self {
+        self.root_element = Arc::new(element.into_element_spawner());
         self
     }
-    pub fn set_root_node(&mut self, node: Node) {
-        self.node = node;
+    pub fn set_root_element<E: IntoChildElementSpawner>(&mut self, element: E) {
+        self.root_element = Arc::new(element.into_element_spawner());
     }
 }
 
 impl Default for Root {
     #[inline]
     fn default() -> Self {
-        let default_node = Node {
-            display: Display::Flex,
-            position_type: PositionType::Relative,
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-            flex_direction: bevy::ui::FlexDirection::Column,
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            ..Default::default()
-        };
         Self {
-            node: default_node,
-            elements: Default::default(),
+            root_element: Arc::new(
+                Centered {
+                    content: sized::Sized::expanded(Column::new()),
+                }
+                .into_element_spawner(),
+            ),
         }
     }
 }
 
 impl<M: Component> MenuPlugin<M> {
-    pub fn add_element<E: IntoChildElementSpawner>(&mut self, e: E) {
-        self.root.add_element(e);
-    }
-    pub fn set_root_node(&mut self, node: Node) {
-        self.root.set_root_node(node);
+    pub fn set_root_element<E: IntoChildElementSpawner>(&mut self, element: E) {
+        self.root.set_root_element(element);
     }
 }
 
@@ -268,53 +215,36 @@ impl<E: Element> ChildElementSpawner for ElementSpawnerImpl<E> {
     }
 }
 
-#[derive(Default, Message)]
-pub struct ShowMenu<M: Component> {
-    _pd: PhantomData<M>,
-}
-
-#[derive(Default, Message)]
-pub struct HideMenu<M: Component> {
-    _pd: PhantomData<M>,
-}
-
 #[derive(Resource)]
 pub struct Menu<M: Component> {
     root: Root,
     _pd: PhantomData<M>,
 }
 
-#[derive(Event)]
-pub struct MenuShowing<M: Component> {
-    entity: Entity,
+#[derive(Message)]
+pub struct DestroyMenu<M: Component> {
     _pd: PhantomData<M>,
 }
 
-impl<M: Component> MenuShowing<M> {
-    pub fn new(entity: Entity) -> Self {
+impl<M: Component> Default for DestroyMenu<M> {
+    fn default() -> Self {
         Self {
-            entity,
             _pd: Default::default(),
         }
     }
 }
-
 impl<M: Component + Default> Plugin for MenuPlugin<M> {
     fn build(&self, app: &mut bevy::app::App) {
-        app.add_message::<ShowMenu<M>>();
-        app.add_message::<HideMenu<M>>();
         let menu = Menu::<M> {
             root: self.root.clone(),
             _pd: Default::default(),
         };
 
-        app.add_systems(
-            Update,
-            show_menu_function::<M>.run_if(on_message::<ShowMenu<M>>),
-        );
+        app.add_message::<DestroyMenu<M>>();
+        app.add_systems(Update, show_menu_function::<M>);
 
         app.insert_resource(menu);
-        app.add_systems(Update, cleanup::<M>.run_if(on_message::<HideMenu<M>>));
+        app.add_systems(Update, cleanup::<M>.run_if(on_message::<DestroyMenu<M>>));
         if !app.is_plugin_added::<SharedMenuStatePlugin>() {
             app.add_plugins(SharedMenuStatePlugin);
         }
@@ -347,13 +277,17 @@ fn init_resource<R: Resource + FromWorld>(mut commands: Commands) {
     commands.init_resource::<R>();
 }
 
-fn show_menu_function<M: Component + Default>(
+fn show_menu_function<M: Component>(
     mut commands: Commands,
     menu: Res<Menu<M>>,
     context: Res<UiContext>,
+    query: Query<Entity, Added<M>>,
 ) {
-    info!("showing menu");
-    let arc = Arc::new(context.clone());
-    let entity = menu.root.spawn::<M>(&mut commands, arc).id();
-    commands.trigger(MenuShowing::<M>::new(entity))
+    for e in query {
+        info!("showing menu");
+        let arc = Arc::new(context.clone());
+        commands.entity(e).with_children(|r| {
+            menu.root.root_element.spawn(r, arc);
+        });
+    }
 }
