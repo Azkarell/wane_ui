@@ -12,6 +12,9 @@ pub struct Placeholder {
 #[derive(Component, Reflect)]
 pub struct PlaceholderTarget(pub String);
 
+#[derive(Component, Reflect)]
+pub struct InsertPlaceholderTraget(pub String);
+
 impl Placeholder {
     pub fn new<T: Into<String>>(name: T) -> Self {
         Self { name: name.into() }

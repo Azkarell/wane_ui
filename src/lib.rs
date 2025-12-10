@@ -60,8 +60,14 @@ use bevy::{
 };
 
 use crate::{
-    centered::Centered, checkbox::update_checkbox_style, child::Child, events::Init,
-    scaled::update_computed_size, sized::update_node_on_size_change, slider::update_slider_style,
+    centered::Centered,
+    checkbox::update_checkbox_style,
+    child::Child,
+    events::Init,
+    placeholder::{InsertPlaceholderTraget, PlaceholderTarget},
+    scaled::update_computed_size,
+    sized::update_node_on_size_change,
+    slider::update_slider_style,
     theme::Themed,
 };
 
@@ -222,6 +228,7 @@ impl<E: Element> ChildElementSpawner for ElementSpawnerImpl<E> {
         });
         ec.trigger(|e| Init { entity: e });
     }
+
     fn insert_root(&self, commands: &mut EntityCommands, context: Arc<UiContext>) {
         let mut node = Node::default();
         self.e.modify_node(&mut node, &context);
@@ -307,13 +314,25 @@ fn show_menu_function<M: Component>(
     mut commands: Commands,
     menu: Res<Menu<M>>,
     context: Res<UiContext>,
-    query: Query<Entity, Added<M>>,
+    query: Query<(Entity, Option<&InsertPlaceholderTraget>), Added<M>>,
+    placeholders: Query<(Entity, &PlaceholderTarget)>,
 ) {
-    for e in query {
-        info!("showing menu");
-        let arc = Arc::new(context.clone());
-        menu.root
-            .root_element
-            .insert_root(&mut commands.entity(e), arc);
+    for (e, t) in query {
+        if let Some(t) = t {
+            if let Some((target, _)) = placeholders.iter().find(|(_, p)| p.0 == t.0) {
+                let arc = Arc::new(context.clone());
+                commands
+                    .entity(target)
+                    .despawn_children()
+                    .with_children(|rcs| {
+                        menu.root.root_element.spawn(rcs, arc);
+                    });
+            } else {
+                let arc = Arc::new(context.clone());
+                menu.root
+                    .root_element
+                    .insert_root(&mut commands.entity(e), arc);
+            }
+        }
     }
 }

@@ -42,7 +42,7 @@ impl Element for Button {
     }
 
     #[inline]
-    fn register_observers(&self, entity_command: &mut EntityCommands, context: &UiContext) {
+    fn register_observers(&self, entity_command: &mut EntityCommands, _context: &UiContext) {
         self.on_click.register_observer(entity_command);
     }
 

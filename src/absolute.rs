@@ -1,4 +1,3 @@
-
 use bevy::{
     ecs::{hierarchy::ChildOf, relationship::RelatedSpawnerCommands, system::EntityCommands},
     ui::Node,
@@ -12,7 +11,6 @@ pub struct Absolute<E: Element> {
 
 impl<E: Element> Absolute<E> {
     #[inline]
-    #[track_caller]
     pub fn new(content: E) -> Self {
         Self { content }
     }
