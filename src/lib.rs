@@ -19,6 +19,7 @@ pub mod image;
 pub mod justified;
 pub mod on_event;
 pub mod padded;
+pub mod placeholder;
 pub mod positioned;
 pub mod scaled;
 pub mod sibling;
@@ -48,7 +49,7 @@ use bevy::{
         resource::Resource,
         schedule::{
             IntoScheduleConfigs,
-            common_conditions::{on_message, resource_added},
+            common_conditions::{on_message, resource_added, resource_exists},
         },
         system::{Commands, EntityCommands, Query, Res},
         world::FromWorld,
@@ -64,10 +65,17 @@ use crate::{
     theme::Themed,
 };
 
-#[derive(Default)]
 pub struct MenuPlugin<M: Component> {
     _pd: PhantomData<M>,
     root: Root,
+}
+impl<M: Component> Default for MenuPlugin<M> {
+    fn default() -> Self {
+        Self {
+            _pd: Default::default(),
+            root: Default::default(),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -195,6 +203,7 @@ impl UiContext {
 
 pub trait ChildElementSpawner: Send + Sync {
     fn spawn(&self, commands: &mut RelatedSpawnerCommands<ChildOf>, context: Arc<UiContext>);
+    fn insert_root(&self, commands: &mut EntityCommands, context: Arc<UiContext>);
 }
 pub struct ElementSpawnerImpl<E: Element> {
     e: E,
@@ -206,6 +215,18 @@ impl<E: Element> ChildElementSpawner for ElementSpawnerImpl<E> {
         self.e.modify_node(&mut node, &context);
         let themed = Themed::from(context.clone());
         let mut ec = commands.spawn((node, self.e.create_bundle(&context)));
+        ec.insert_if_new(themed);
+        self.e.register_observers(&mut ec, &context);
+        ec.with_children(|rcs| {
+            self.e.spawn_children(rcs, context);
+        });
+        ec.trigger(|e| Init { entity: e });
+    }
+    fn insert_root(&self, commands: &mut EntityCommands, context: Arc<UiContext>) {
+        let mut node = Node::default();
+        self.e.modify_node(&mut node, &context);
+        let themed = Themed::from(context.clone());
+        let mut ec = commands.insert_if_new((node, self.e.create_bundle(&context)));
         ec.insert_if_new(themed);
         self.e.register_observers(&mut ec, &context);
         ec.with_children(|rcs| {
@@ -241,7 +262,10 @@ impl<M: Component + Default> Plugin for MenuPlugin<M> {
         };
 
         app.add_message::<DestroyMenu<M>>();
-        app.add_systems(Update, show_menu_function::<M>);
+        app.add_systems(
+            Update,
+            show_menu_function::<M>.run_if(resource_exists::<UiContext>),
+        );
 
         app.insert_resource(menu);
         app.add_systems(Update, cleanup::<M>.run_if(on_message::<DestroyMenu<M>>));
@@ -263,8 +287,10 @@ impl Plugin for SharedMenuStatePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, update_slider_style);
         app.add_systems(Update, update_checkbox_style);
-        app.add_systems(Update, update_computed_size);
-        app.add_systems(Update, update_node_on_size_change);
+        app.add_systems(
+            Update,
+            (update_computed_size, update_node_on_size_change).chain(),
+        );
         app.add_systems(
             Update,
             init_resource::<UiContext>.run_if(resource_added::<UiFont>),
@@ -286,8 +312,8 @@ fn show_menu_function<M: Component>(
     for e in query {
         info!("showing menu");
         let arc = Arc::new(context.clone());
-        commands.entity(e).with_children(|r| {
-            menu.root.root_element.spawn(r, arc);
-        });
+        menu.root
+            .root_element
+            .insert_root(&mut commands.entity(e), arc);
     }
 }

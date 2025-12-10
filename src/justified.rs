@@ -14,7 +14,6 @@ pub struct Justified<E: Element> {
 
 impl<E: Element> Justified<E> {
     #[inline]
-    #[track_caller]
     pub fn new(content: E) -> Self {
         Self {
             content,

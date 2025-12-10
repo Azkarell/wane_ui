@@ -41,7 +41,6 @@ impl Element for () {
 
 impl Sized<()> {
     #[inline]
-    #[track_caller]
     pub fn empty_sized(width: Val, height: Val) -> Self {
         Self {
             width,
@@ -50,7 +49,6 @@ impl Sized<()> {
         }
     }
     #[inline]
-    #[track_caller]
     pub fn empty() -> Self {
         Self {
             width: Val::Auto,
@@ -60,7 +58,6 @@ impl Sized<()> {
     }
 
     #[inline]
-    #[track_caller]
     pub fn expand() -> Self {
         Self {
             width: percent(100),
@@ -72,7 +69,6 @@ impl Sized<()> {
 
 impl<E: Element> Sized<E> {
     #[inline]
-    #[track_caller]
     pub fn new(width: Val, height: Val, content: E) -> Self {
         Self {
             width,
@@ -81,7 +77,6 @@ impl<E: Element> Sized<E> {
         }
     }
     #[inline]
-    #[track_caller]
     pub fn expanded(content: E) -> Self {
         Self {
             width: percent(100),

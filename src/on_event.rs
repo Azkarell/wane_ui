@@ -13,7 +13,6 @@ pub struct OnEvent<E: Element, Ev: EntityEvent> {
 
 impl<E: Element, Ev: EntityEvent> OnEvent<E, Ev> {
     #[inline]
-    #[track_caller]
     pub fn new<F: Send + Sync, M: 'static>(on_event: F, content: E) -> Self
     where
         F: IntoObserverSystem<Ev, (), M> + Copy,

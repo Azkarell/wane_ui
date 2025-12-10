@@ -41,7 +41,6 @@ pub struct Theme<E: Element> {
 
 impl<E: Element> Theme<E> {
     #[inline]
-    #[track_caller]
     pub fn new(content: E) -> Self {
         Self {
             image_color: None,

@@ -23,7 +23,6 @@ pub struct Hover<E: Element> {
 
 impl<E: Element> Hover<E> {
     #[inline]
-    #[track_caller]
     pub fn new<F: Send + Sync, M: 'static>(on_hover: F, content: E) -> Self
     where
         F: IntoObserverSystem<Insert, Hovered, M> + Copy,

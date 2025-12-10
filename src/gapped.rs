@@ -15,7 +15,6 @@ pub struct Gapped<E: Element> {
 
 impl<E: Element> Gapped<E> {
     #[inline]
-    #[track_caller]
     pub fn new(content: E) -> Self {
         Self {
             content,

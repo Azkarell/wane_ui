@@ -1,4 +1,3 @@
-
 use bevy::{
     ecs::{hierarchy::ChildOf, relationship::RelatedSpawnerCommands, system::EntityCommands},
     ui::{AlignItems, Node},
@@ -14,7 +13,6 @@ pub struct Aligned<E: Element> {
 
 impl<E: Element> Aligned<E> {
     #[inline]
-    #[track_caller]
     pub fn new(content: E) -> Self {
         Self {
             content,

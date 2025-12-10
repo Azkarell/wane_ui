@@ -40,7 +40,6 @@ impl Element for Column {
 
 impl Column {
     #[inline]
-    #[track_caller]
     pub fn new() -> Self {
         Self { elements: vec![] }
     }
@@ -87,7 +86,6 @@ impl Element for Row {
 
 impl Row {
     #[inline]
-    #[track_caller]
     pub fn new() -> Self {
         Self { elements: vec![] }
     }

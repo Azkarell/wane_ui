@@ -29,7 +29,6 @@ pub struct Image {
 
 impl Image {
     #[inline]
-    #[track_caller]
     pub fn new() -> Self {
         Self {
             child: None,
@@ -39,7 +38,6 @@ impl Image {
         }
     }
     #[inline]
-    #[track_caller]
     pub fn new_with_handle(handle: Handle<UiImage>) -> Self {
         Self {
             child: None,

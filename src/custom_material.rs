@@ -12,7 +12,6 @@ pub struct CustomNode<M: UiMaterial> {
 
 impl<M: UiMaterial> CustomNode<M> {
     #[inline]
-    #[track_caller]
     pub fn new<E: IntoChild>(content: E) -> Self {
         CustomNode {
             material: Handle::default(),

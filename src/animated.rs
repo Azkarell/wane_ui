@@ -64,7 +64,6 @@ pub struct Animated<E: Element> {
 }
 
 impl<E: Element> Animated<E> {
-    #[track_caller]
     pub fn new(name: String, content: E) -> Self {
         let name = Name::new(name);
         let id = AnimationTargetId::from_name(&name);
@@ -185,7 +184,6 @@ pub struct Animator<E: Element> {
     pub content: E,
 }
 impl<E: Element> Animator<E> {
-    #[track_caller]
     pub fn new(content: E) -> Self {
         Self {
             graph: Handle::default(),

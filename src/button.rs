@@ -3,14 +3,10 @@ use std::sync::Arc;
 use bevy::{
     ecs::{
         hierarchy::ChildOf,
-        lifecycle::Insert,
-        observer::On,
         relationship::RelatedSpawnerCommands,
-        system::{EntityCommands, IntoObserverSystem, Query},
+        system::{EntityCommands, IntoObserverSystem},
     },
-    log::info,
-    picking::hover::Hovered,
-    ui::{BackgroundColor, Node, Val},
+    ui::{Node, Val},
     ui_widgets::{Activate, Button as UiButton},
 };
 
@@ -26,7 +22,6 @@ pub struct Button {
 
 impl Button {
     #[inline]
-    #[track_caller]
     pub fn new<F: Send + Sync, M: 'static, C: IntoChild>(on_click: F, content: C) -> Self
     where
         F: IntoObserverSystem<Activate, (), M> + Copy,
@@ -48,22 +43,6 @@ impl Element for Button {
 
     #[inline]
     fn register_observers(&self, entity_command: &mut EntityCommands, context: &UiContext) {
-        let bg_c = context.background_color;
-        let hover_c = context.hover_color;
-        entity_command.observe(
-            move |event: On<Insert, Hovered>,
-                  mut query: Query<(&mut BackgroundColor, &Hovered)>| {
-                let Ok((mut bg, hovered)) = query.get_mut(event.entity) else {
-                    info!("BackgroundColor not found");
-                    return;
-                };
-                if hovered.get() {
-                    bg.0 = hover_c;
-                } else {
-                    bg.0 = bg_c;
-                }
-            },
-        );
         self.on_click.register_observer(entity_command);
     }
 
@@ -76,7 +55,6 @@ impl Element for Button {
     fn modify_node(&self, _node: &mut Node, _context: &UiContext) {}
 }
 
-#[track_caller]
 pub fn button_with_text<F: Send + Sync, M: 'static>(
     text: String,
     width: Val,
