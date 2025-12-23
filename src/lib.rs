@@ -54,7 +54,7 @@ use bevy::{
         system::{Commands, EntityCommands, Query, Res},
         world::FromWorld,
     },
-    log::info,
+    log::{info, warn},
     text::Font,
     ui::{BorderColor, BorderRadius, Node, UiRect, px},
 };
@@ -318,21 +318,19 @@ fn show_menu_function<M: Component>(
     placeholders: Query<(Entity, &PlaceholderTarget)>,
 ) {
     for (e, t) in query {
+        let arc = Arc::new(context.clone());
         if let Some(t) = t {
             if let Some((target, _)) = placeholders.iter().find(|(_, p)| p.0 == t.0) {
-                let arc = Arc::new(context.clone());
-                commands
-                    .entity(target)
-                    .despawn_children()
-                    .with_children(|rcs| {
-                        menu.root.root_element.spawn(rcs, arc);
-                    });
+                let ec = &mut commands.entity(e);
+                ec.insert(ChildOf(target));
+                menu.root.root_element.insert_root(ec, arc);
+                return;
             } else {
-                let arc = Arc::new(context.clone());
-                menu.root
-                    .root_element
-                    .insert_root(&mut commands.entity(e), arc);
+                warn!("failed to find placeholder: '{}'", t.0);
             }
         }
+        menu.root
+            .root_element
+            .insert_root(&mut commands.entity(e), arc);
     }
 }
