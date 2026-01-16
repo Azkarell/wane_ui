@@ -3126,6 +3126,7 @@ dependencies = [
 [[package]]
 name = "wane_observers"
 version = "0.17.0"
+source = "git+https://github.com/Azkarell/wane_observers.git#ac062804d00e852b91eb274aa280a5d63098a9f4"
 dependencies = [
  "bevy",
 ]
