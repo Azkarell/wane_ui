@@ -283,6 +283,7 @@ impl<M: Component + Default> Plugin for MenuPlugin<M> {
 }
 
 fn cleanup<C: Component>(mut commands: Commands, query: Query<Entity, With<C>>) {
+    info!("cleaning up");
     for e in query {
         commands.entity(e).despawn();
     }
