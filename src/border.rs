@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use bevy::ui::{BorderColor, BorderRadius, Node, UiRect, px};
+use bevy::ui::{BorderColor, Node, UiRect, px};
 
 use crate::{Element, UiContext};
 
@@ -91,7 +91,7 @@ impl<E: Element> Border<E> {
 }
 
 impl<E: Element> Element for Border<E> {
-    type Bundle = (BorderRadius, BorderColor, E::Bundle);
+    type Bundle = (BorderColor, E::Bundle);
 
     #[inline]
     fn modify_node(&self, node: &mut Node, context: &UiContext) {
@@ -118,17 +118,14 @@ impl<E: Element> Element for Border<E> {
             },
         );
         node.border = ui_rect;
+        node.border_radius = context.border_radius;
 
         self.content.modify_node(node, context);
     }
 
     #[inline]
     fn create_bundle(&self, context: &UiContext) -> Self::Bundle {
-        (
-            context.border_radius,
-            context.border_color,
-            self.content.create_bundle(context),
-        )
+        (context.border_color, self.content.create_bundle(context))
     }
 
     #[inline]

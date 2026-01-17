@@ -2,7 +2,7 @@ use std::{collections::HashMap, iter::once};
 
 use bevy::{
     animation::{
-        AnimationClip, AnimationPlayer, AnimationTarget, AnimationTargetId, VariableCurve,
+        AnimatedBy, AnimationClip, AnimationPlayer, AnimationTargetId, VariableCurve,
         animation_curves::AnimationCurve,
         graph::{AnimationGraph, AnimationGraphHandle, AnimationNodeIndex},
     },
@@ -108,7 +108,7 @@ struct AfterAnimationGraphInit {
 }
 
 impl<E: Element> Element for Animated<E> {
-    type Bundle = (Name, AnimationTarget, E::Bundle);
+    type Bundle = (Name, AnimationTargetId, AnimatedBy, E::Bundle);
 
     #[inline]
     fn modify_node(&self, node: &mut bevy::ui::Node, context: &crate::UiContext) {
@@ -119,10 +119,8 @@ impl<E: Element> Element for Animated<E> {
     fn create_bundle(&self, context: &crate::UiContext) -> Self::Bundle {
         (
             self.name.clone(),
-            AnimationTarget {
-                id: self.animation_id.clone(),
-                player: context.current_animator.expect("No Animator set"),
-            },
+            self.animation_id.clone(),
+            AnimatedBy(context.current_animator.expect("No Animator set")),
             self.content.create_bundle(context),
         )
     }
