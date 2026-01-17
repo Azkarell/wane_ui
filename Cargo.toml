@@ -4,5 +4,5 @@ version = "0.17.0"
 edition = "2024"
 
 [dependencies]
-bevy = { version = "0.17.2", features = ["bevy_ui", "bevy_ui_render", "bevy_log", "bevy_picking", "experimental_bevy_ui_widgets", "bevy_animation"], default-features = false }
+bevy = { version = "0.18.0", features = ["bevy_ui", "bevy_ui_render", "bevy_log", "bevy_picking", "experimental_bevy_ui_widgets", "bevy_animation"], default-features = false }
 wane_observers = { git = "https://github.com/Azkarell/wane_observers.git"}
