@@ -1,4 +1,4 @@
-use std::{ops::Deref, sync::Arc};
+use std::{marker::PhantomData, ops::Deref, sync::Arc};
 
 use bevy::{
     asset::Handle,
@@ -18,7 +18,29 @@ use bevy::{
     },
 };
 
-use crate::{Element, IntoChild, UiContext, child::Child, events::Init};
+use crate::{Element, IntoChild, UiContext, child::Child, events::Init, on_event::OnEvent};
+
+pub type ImageFromResource<E> = OnEvent<Image<E>, Init>;
+
+impl<E: Element> ImageFromResource<E> {
+    pub fn image_from_resource_with_content<
+        R: Resource + Deref<Target = Handle<bevy::prelude::Image>>,
+    >(
+        content: E,
+    ) -> Self {
+        OnEvent::new(
+            init_image_from_resource::<R>,
+            Image::new().with_content(content),
+        )
+    }
+}
+
+impl ImageFromResource<()> {
+    pub fn image_from_resource<R: Resource + Deref<Target = Handle<bevy::prelude::Image>>>() -> Self
+    {
+        OnEvent::new(init_image_from_resource::<R>, Image::new())
+    }
+}
 
 pub struct Image<E: Element> {
     pub content: E,
