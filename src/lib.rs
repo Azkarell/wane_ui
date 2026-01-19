@@ -285,7 +285,7 @@ impl<M: Component + Default> Plugin for MenuPlugin<M> {
         app.add_systems(Update, cleanup::<M>.in_set(UiSystems::Remove));
         app.configure_sets(
             Update,
-            (UiSystems::Add, UiSystems::Remove, UiSystems::Finish).chain(),
+            (UiSystems::Remove, UiSystems::Add, UiSystems::Finish).chain(),
         );
         app.add_systems(Update, clear_just_added.in_set(UiSystems::Finish));
         if !app.is_plugin_added::<SharedMenuStatePlugin>() {
@@ -299,6 +299,9 @@ fn cleanup<C: Component>(
     mut messages: MessageReader<DestroyMenu<C>>,
     mut just_removed: ResMut<JustRemovedEntities>,
 ) {
+    if messages.is_empty() {
+        return;
+    }
     info!("cleaning up");
     for e in messages.read() {
         just_removed.0.insert(e.target);
