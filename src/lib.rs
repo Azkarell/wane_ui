@@ -40,19 +40,19 @@ use bevy::{
     color::Color,
     ecs::{
         bundle::Bundle,
-        change_detection::DetectChanges,
+        change_detection::{DetectChanges, DetectChangesMut},
         component::Component,
-        entity::Entity,
+        entity::{Entity, EntityHashSet, EntityIndexSet, EntitySet},
         hierarchy::ChildOf,
         message::Message,
         query::{Added, With},
         relationship::RelatedSpawnerCommands,
         resource::Resource,
         schedule::{
-            IntoScheduleConfigs, SystemCondition,
+            IntoScheduleConfigs, SystemCondition, SystemSet,
             common_conditions::{not, on_message, resource_added, resource_exists},
         },
-        system::{Commands, EntityCommands, Query, Res},
+        system::{Commands, EntityCommands, Query, Res, ResMut},
         world::{FromWorld, Ref},
     },
     log::{debug, info, warn},
@@ -272,22 +272,38 @@ impl<M: Component + Default> Plugin for MenuPlugin<M> {
         app.add_message::<DestroyMenu<M>>();
         app.add_systems(
             Update,
-            show_menu_function::<M>.run_if(resource_exists::<UiContext>),
+            show_menu_function::<M>
+                .run_if(resource_exists::<UiContext>)
+                .in_set(UiSystems::Add),
         );
 
         app.insert_resource(menu);
-        app.add_systems(Update, cleanup::<M>.run_if(on_message::<DestroyMenu<M>>));
+        app.add_systems(
+            Update,
+            cleanup::<M>
+                .run_if(on_message::<DestroyMenu<M>>)
+                .in_set(UiSystems::Remove),
+        );
+        app.configure_sets(
+            Update,
+            (UiSystems::Add, UiSystems::Remove, UiSystems::Finish).chain(),
+        );
+        app.add_systems(Update, clear_just_added.in_set(UiSystems::Finish));
         if !app.is_plugin_added::<SharedMenuStatePlugin>() {
             app.add_plugins(SharedMenuStatePlugin);
         }
     }
 }
 
-fn cleanup<C: Component>(mut commands: Commands, query: Query<(Entity, Ref<C>)>) {
+fn cleanup<C: Component>(
+    mut commands: Commands,
+    query: Query<Entity, With<C>>,
+    just_added: Res<JustAddedEntities>,
+) {
     info!("cleaning up");
-    for (e, ref_c) in query {
-        if ref_c.is_added() {
-            debug!("component was just added again");
+    for e in query {
+        if just_added.0.contains(&e) {
+            info!("skipping entity that was just added");
             continue;
         }
         commands.entity(e).despawn();
@@ -322,9 +338,11 @@ fn show_menu_function<M: Component>(
     context: Res<UiContext>,
     query: Query<(Entity, Option<&InsertPlaceholderTraget>), Added<M>>,
     placeholders: Query<(Entity, &PlaceholderTarget)>,
+    mut just_added: ResMut<JustAddedEntities>,
 ) {
     for (e, t) in query {
         let arc = Arc::new(context.clone());
+        just_added.0.insert(e);
         if let Some(t) = t {
             if let Some((target, _)) = placeholders.iter().find(|(_, p)| p.0 == t.0) {
                 let mut ec = commands.entity(e);
@@ -339,4 +357,20 @@ fn show_menu_function<M: Component>(
             .root_element
             .insert_root(&mut commands.entity(e), arc);
     }
+}
+
+fn clear_just_added(mut just_added: ResMut<JustAddedEntities>) {
+    if just_added.is_changed() {
+        just_added.bypass_change_detection().0.clear();
+    }
+}
+
+#[derive(Resource)]
+pub struct JustAddedEntities(EntityIndexSet);
+
+#[derive(SystemSet, Hash, PartialEq, Eq, Debug, Clone)]
+pub enum UiSystems {
+    Remove,
+    Add,
+    Finish,
 }
