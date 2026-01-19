@@ -302,8 +302,8 @@ fn cleanup<C: Component>(
     if messages.is_empty() {
         return;
     }
-    info!("cleaning up");
     for e in messages.read() {
+        info!("cleaning up: {:?}", e.target);
         just_removed.0.insert(e.target);
         commands.entity(e.target).despawn();
     }
