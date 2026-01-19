@@ -40,6 +40,7 @@ use bevy::{
     color::Color,
     ecs::{
         bundle::Bundle,
+        change_detection::DetectChanges,
         component::Component,
         entity::Entity,
         hierarchy::ChildOf,
@@ -48,13 +49,13 @@ use bevy::{
         relationship::RelatedSpawnerCommands,
         resource::Resource,
         schedule::{
-            IntoScheduleConfigs,
-            common_conditions::{on_message, resource_added, resource_exists},
+            IntoScheduleConfigs, SystemCondition,
+            common_conditions::{not, on_message, resource_added, resource_exists},
         },
         system::{Commands, EntityCommands, Query, Res},
-        world::FromWorld,
+        world::{FromWorld, Ref},
     },
-    log::{info, warn},
+    log::{debug, info, warn},
     text::Font,
     ui::{BorderColor, BorderRadius, Node, UiRect, px},
 };
@@ -282,9 +283,13 @@ impl<M: Component + Default> Plugin for MenuPlugin<M> {
     }
 }
 
-fn cleanup<C: Component>(mut commands: Commands, query: Query<Entity, With<C>>) {
+fn cleanup<C: Component>(mut commands: Commands, query: Query<(Entity, Ref<C>)>) {
     info!("cleaning up");
-    for e in query {
+    for (e, ref_c) in query {
+        if ref_c.is_added() {
+            debug!("component was just added again");
+            continue;
+        }
         commands.entity(e).despawn();
     }
 }
@@ -322,9 +327,9 @@ fn show_menu_function<M: Component>(
         let arc = Arc::new(context.clone());
         if let Some(t) = t {
             if let Some((target, _)) = placeholders.iter().find(|(_, p)| p.0 == t.0) {
-                let ec = &mut commands.entity(e);
+                let mut ec = commands.entity(e);
                 ec.insert(ChildOf(target));
-                menu.root.root_element.insert_root(ec, arc);
+                menu.root.root_element.insert_root(&mut ec, arc);
                 return;
             } else {
                 warn!("failed to find placeholder: '{}'", t.0);
