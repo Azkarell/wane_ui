@@ -42,20 +42,20 @@ use bevy::{
         bundle::Bundle,
         change_detection::{DetectChanges, DetectChangesMut},
         component::Component,
-        entity::{Entity, EntityHashSet, EntityIndexSet, EntitySet},
+        entity::{Entity, EntityIndexSet},
         hierarchy::ChildOf,
-        message::Message,
-        query::{Added, With},
+        message::{Message, MessageReader},
+        query::Added,
         relationship::RelatedSpawnerCommands,
         resource::Resource,
         schedule::{
-            IntoScheduleConfigs, SystemCondition, SystemSet,
-            common_conditions::{not, on_message, resource_added, resource_exists},
+            IntoScheduleConfigs, SystemSet,
+            common_conditions::{resource_added, resource_exists},
         },
         system::{Commands, EntityCommands, Query, Res, ResMut},
-        world::{FromWorld, Ref},
+        world::FromWorld,
     },
-    log::{debug, info, warn},
+    log::{info, warn},
     text::Font,
     ui::{BorderColor, BorderRadius, Node, UiRect, px},
 };
@@ -252,18 +252,22 @@ pub struct Menu<M: Component> {
 
 #[derive(Message)]
 pub struct DestroyMenu<M: Component> {
+    pub target: Entity,
     _pd: PhantomData<M>,
 }
 
-impl<M: Component> Default for DestroyMenu<M> {
-    fn default() -> Self {
+impl<M: Component> DestroyMenu<M> {
+    pub fn new(entity: Entity) -> Self {
         Self {
+            target: entity,
             _pd: Default::default(),
         }
     }
 }
+
 impl<M: Component + Default> Plugin for MenuPlugin<M> {
     fn build(&self, app: &mut bevy::app::App) {
+        app.insert_resource(JustRemovedEntities(EntityIndexSet::new()));
         let menu = Menu::<M> {
             root: self.root.clone(),
             _pd: Default::default(),
@@ -278,12 +282,7 @@ impl<M: Component + Default> Plugin for MenuPlugin<M> {
         );
 
         app.insert_resource(menu);
-        app.add_systems(
-            Update,
-            cleanup::<M>
-                .run_if(on_message::<DestroyMenu<M>>)
-                .in_set(UiSystems::Remove),
-        );
+        app.add_systems(Update, cleanup::<M>.in_set(UiSystems::Remove));
         app.configure_sets(
             Update,
             (UiSystems::Add, UiSystems::Remove, UiSystems::Finish).chain(),
@@ -297,16 +296,13 @@ impl<M: Component + Default> Plugin for MenuPlugin<M> {
 
 fn cleanup<C: Component>(
     mut commands: Commands,
-    query: Query<Entity, With<C>>,
-    just_added: Res<JustAddedEntities>,
+    mut messages: MessageReader<DestroyMenu<C>>,
+    mut just_removed: ResMut<JustRemovedEntities>,
 ) {
     info!("cleaning up");
-    for e in query {
-        if just_added.0.contains(&e) {
-            info!("skipping entity that was just added");
-            continue;
-        }
-        commands.entity(e).despawn();
+    for e in messages.read() {
+        just_removed.0.insert(e.target);
+        commands.entity(e.target).despawn();
     }
 }
 
@@ -338,17 +334,20 @@ fn show_menu_function<M: Component>(
     context: Res<UiContext>,
     query: Query<(Entity, Option<&InsertPlaceholderTraget>), Added<M>>,
     placeholders: Query<(Entity, &PlaceholderTarget)>,
-    mut just_added: ResMut<JustAddedEntities>,
+    just_removed: Res<JustRemovedEntities>,
 ) {
     for (e, t) in query {
+        if just_removed.0.contains(&e) {
+            info!("menu already destroyed");
+            continue;
+        }
         let arc = Arc::new(context.clone());
-        just_added.0.insert(e);
         if let Some(t) = t {
             if let Some((target, _)) = placeholders.iter().find(|(_, p)| p.0 == t.0) {
                 let mut ec = commands.entity(e);
                 ec.insert(ChildOf(target));
                 menu.root.root_element.insert_root(&mut ec, arc);
-                return;
+                continue;
             } else {
                 warn!("failed to find placeholder: '{}'", t.0);
             }
@@ -359,14 +358,14 @@ fn show_menu_function<M: Component>(
     }
 }
 
-fn clear_just_added(mut just_added: ResMut<JustAddedEntities>) {
-    if just_added.is_changed() {
-        just_added.bypass_change_detection().0.clear();
+fn clear_just_added(mut just_removed: ResMut<JustRemovedEntities>) {
+    if just_removed.is_changed() {
+        just_removed.bypass_change_detection().0.clear();
     }
 }
 
 #[derive(Resource)]
-pub struct JustAddedEntities(EntityIndexSet);
+pub struct JustRemovedEntities(EntityIndexSet);
 
 #[derive(SystemSet, Hash, PartialEq, Eq, Debug, Clone)]
 pub enum UiSystems {
