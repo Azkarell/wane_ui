@@ -35,6 +35,7 @@ impl Element for Column {
     #[inline]
     fn modify_node(&self, node: &mut Node, _context: &UiContext) {
         node.flex_direction = FlexDirection::Column;
+        node.grid_auto_flow = bevy::ui::GridAutoFlow::Column;
     }
 }
 
@@ -81,6 +82,7 @@ impl Element for Row {
     #[inline]
     fn modify_node(&self, node: &mut Node, _context: &UiContext) {
         node.flex_direction = FlexDirection::Row;
+        node.grid_auto_flow = bevy::ui::GridAutoFlow::Row;
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, ops::Deref, sync::Arc};
+use std::{ops::Deref, sync::Arc};
 
 use bevy::{
     asset::Handle,

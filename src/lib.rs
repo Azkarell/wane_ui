@@ -14,6 +14,7 @@ pub mod child;
 pub mod custom_material;
 pub mod events;
 pub mod gapped;
+pub mod grid;
 pub mod hover;
 pub mod image;
 pub mod justified;
