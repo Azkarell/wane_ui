@@ -107,7 +107,7 @@ impl Default for Root {
         Self {
             root_element: Arc::new(
                 Centered {
-                    content: sized::Sized::expanded(Column::new()),
+                    content: sized::Sized::expanded(Column::new(())),
                 }
                 .into_element_spawner(),
             ),

@@ -7,97 +7,115 @@ use bevy::{
 
 use crate::{ChildElementSpawner, Element, IntoChildElementSpawner, UiContext};
 
-pub struct Column {
-    elements: Vec<Box<dyn ChildElementSpawner>>,
+pub struct Column<E: Element> {
+    content: E,
+    children: Vec<Box<dyn ChildElementSpawner>>,
 }
 
-impl Element for Column {
-    type Bundle = ();
+impl<E: Element> Element for Column<E> {
+    type Bundle = E::Bundle;
 
     #[inline]
-    fn create_bundle(&self, _context: &UiContext) -> Self::Bundle {}
+    fn create_bundle(&self, context: &UiContext) -> Self::Bundle {
+        self.content.create_bundle(context)
+    }
 
     #[inline]
     fn register_observers(
         &self,
-        _entity_command: &mut bevy::ecs::system::EntityCommands,
-        _context: &UiContext,
+        entity_command: &mut bevy::ecs::system::EntityCommands,
+        context: &UiContext,
     ) {
+        self.content.register_observers(entity_command, context);
     }
 
     #[inline]
     fn spawn_children(&self, rcs: &mut RelatedSpawnerCommands<ChildOf>, context: Arc<UiContext>) {
-        for c in &self.elements {
+        self.content.spawn_children(rcs, context.clone());
+        for c in &self.children {
             c.spawn(rcs, context.clone());
         }
     }
 
     #[inline]
-    fn modify_node(&self, node: &mut Node, _context: &UiContext) {
+    fn modify_node(&self, node: &mut Node, context: &UiContext) {
         node.flex_direction = FlexDirection::Column;
         node.grid_auto_flow = bevy::ui::GridAutoFlow::Column;
+        self.content.modify_node(node, context);
     }
 }
 
-impl Column {
+impl<E: Element> Column<E> {
     #[inline]
-    pub fn new() -> Self {
-        Self { elements: vec![] }
+    pub fn new(content: E) -> Self {
+        Self {
+            children: vec![],
+            content,
+        }
     }
     #[inline]
-    pub fn with_element<E: IntoChildElementSpawner>(mut self, e: E) -> Self {
-        self.elements.push(e.into_element_spawner());
+    pub fn with_element<I: IntoChildElementSpawner>(mut self, e: I) -> Self {
+        self.children.push(e.into_element_spawner());
         self
     }
     #[inline]
-    pub fn add_element<E: IntoChildElementSpawner>(&mut self, e: E) {
-        self.elements.push(e.into_element_spawner());
+    pub fn add_element<I: IntoChildElementSpawner>(&mut self, e: I) {
+        self.children.push(e.into_element_spawner());
     }
 }
-pub struct Row {
-    elements: Vec<Box<dyn ChildElementSpawner>>,
+pub struct Row<E: Element> {
+    children: Vec<Box<dyn ChildElementSpawner>>,
+    content: E,
 }
 
-impl Element for Row {
-    type Bundle = ();
+impl<E: Element> Element for Row<E> {
+    type Bundle = E::Bundle;
 
     #[inline]
-    fn create_bundle(&self, _context: &UiContext) -> Self::Bundle {}
+    fn create_bundle(&self, context: &UiContext) -> Self::Bundle {
+        self.content.create_bundle(context)
+    }
 
     #[inline]
     fn register_observers(
         &self,
-        _entity_command: &mut bevy::ecs::system::EntityCommands,
-        _context: &UiContext,
+        entity_command: &mut bevy::ecs::system::EntityCommands,
+        context: &UiContext,
     ) {
+        self.content.register_observers(entity_command, context);
     }
 
     #[inline]
     fn spawn_children(&self, rcs: &mut RelatedSpawnerCommands<ChildOf>, context: Arc<UiContext>) {
-        for c in &self.elements {
+        self.content.spawn_children(rcs, context.clone());
+        for c in &self.children {
             c.spawn(rcs, context.clone());
         }
     }
 
     #[inline]
-    fn modify_node(&self, node: &mut Node, _context: &UiContext) {
+    fn modify_node(&self, node: &mut Node, context: &UiContext) {
         node.flex_direction = FlexDirection::Row;
         node.grid_auto_flow = bevy::ui::GridAutoFlow::Row;
+        self.content.modify_node(node, context);
     }
 }
 
-impl Row {
+impl<E: Element> Row<E> {
     #[inline]
-    pub fn new() -> Self {
-        Self { elements: vec![] }
+    pub fn new(content: E) -> Self {
+        Self {
+            children: vec![],
+            content,
+        }
     }
     #[inline]
-    pub fn with_element<E: IntoChildElementSpawner>(mut self, e: E) -> Self {
-        self.elements.push(e.into_element_spawner());
+    pub fn with_element<I: IntoChildElementSpawner>(mut self, e: I) -> Self {
+        self.children.push(e.into_element_spawner());
         self
     }
     #[inline]
-    pub fn add_element<E: IntoChildElementSpawner>(&mut self, e: E) {
-        self.elements.push(e.into_element_spawner());
+    pub fn add_element<I: IntoChildElementSpawner>(&mut self, e: I) {
+        self.children.push(e.into_element_spawner());
     }
 }
