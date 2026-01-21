@@ -1,7 +1,7 @@
 use crate::Element;
 
 pub struct Grid<E: Element> {
-    content: E,
+    pub content: E,
 }
 
 impl<E: Element> Element for Grid<E> {
