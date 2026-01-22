@@ -235,9 +235,9 @@ impl<E: Element> ChildElementSpawner for ElementSpawnerImpl<E> {
         let mut node = Node::default();
         self.e.modify_node(&mut node, &context);
         let themed = Themed::from(context.clone());
-        let mut ec = commands.insert_if_new((node, self.e.create_bundle(&context)));
+        let ec = commands.insert_if_new((node, self.e.create_bundle(&context)));
         ec.insert_if_new(themed);
-        self.e.register_observers(&mut ec, &context);
+        self.e.register_observers(ec, &context);
         ec.with_children(|rcs| {
             self.e.spawn_children(rcs, context);
         });
