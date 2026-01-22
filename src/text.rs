@@ -34,7 +34,7 @@ impl Element for Text {
         (
             UiText::new(&self.text),
             TextFont::from_font_size(size).with_font(context.font.clone()),
-            TextColor(context.text_color.clone()),
+            TextColor(context.text_color),
             TextLayout::new_with_justify(Justify::Center),
         )
     }

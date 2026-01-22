@@ -28,7 +28,7 @@ impl<E: Element> Border<E> {
     #[inline]
     pub fn all(content: E) -> Self {
         Self {
-            content: content,
+            content,
             top: true,
             bottom: true,
             left: true,

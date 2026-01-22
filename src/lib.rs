@@ -57,6 +57,8 @@ use bevy::{
         world::FromWorld,
     },
     log::{info, warn},
+    platform::collections::HashMap,
+    prelude::{Deref, DerefMut},
     text::Font,
     ui::{BorderColor, BorderRadius, Node, UiRect, px},
 };
@@ -314,8 +316,15 @@ struct SharedMenuStatePlugin;
 
 impl Plugin for SharedMenuStatePlugin {
     fn build(&self, app: &mut App) {
+        app.insert_resource(PlaceHolders(HashMap::new()));
         app.add_systems(Update, update_slider_style);
-        app.add_systems(Update, update_checkbox_style);
+        app.add_systems(
+            Update,
+            (
+                update_checkbox_style,
+                (update_placeholder, move_to_placeholder_target).chain(),
+            ),
+        );
         app.add_systems(
             Update,
             (update_computed_size, update_node_on_size_change).chain(),
@@ -332,30 +341,46 @@ fn init_resource<R: Resource + FromWorld>(mut commands: Commands) {
     commands.init_resource::<R>();
 }
 
+#[derive(Resource, Deref, DerefMut)]
+struct PlaceHolders(HashMap<String, Entity>);
+
+fn update_placeholder(
+    mut placeholders: ResMut<PlaceHolders>,
+    query: Query<(Entity, &PlaceholderTarget), Added<PlaceholderTarget>>,
+) {
+    for (e, pt) in query {
+        placeholders.insert(pt.0.clone(), e);
+    }
+}
+
+fn move_to_placeholder_target(
+    inserts: Query<(Entity, &InsertPlaceholderTraget), Added<InsertPlaceholderTraget>>,
+    placeholders: Res<PlaceHolders>,
+    mut commands: Commands,
+) {
+    for (e, i) in inserts {
+        let Some(p) = placeholders.get(&i.0).cloned() else {
+            warn!("placeholder target not found");
+            continue;
+        };
+        commands.entity(e).insert(ChildOf(p));
+    }
+}
+
 fn show_menu_function<M: Component>(
     mut commands: Commands,
     menu: Res<Menu<M>>,
     context: Res<UiContext>,
-    query: Query<(Entity, Option<&InsertPlaceholderTraget>), Added<M>>,
-    placeholders: Query<(Entity, &PlaceholderTarget)>,
+    query: Query<Entity, Added<M>>,
     just_removed: Res<JustRemovedEntities>,
 ) {
-    for (e, t) in query {
+    for e in query {
         if just_removed.0.contains(&e) {
             info!("menu already destroyed");
             continue;
         }
         let arc = Arc::new(context.clone());
-        if let Some(t) = t {
-            if let Some((target, _)) = placeholders.iter().find(|(_, p)| p.0 == t.0) {
-                let mut ec = commands.entity(e);
-                ec.insert(ChildOf(target));
-                menu.root.root_element.insert_root(&mut ec, arc);
-                continue;
-            } else {
-                warn!("failed to find placeholder: '{}'", t.0);
-            }
-        }
+
         menu.root
             .root_element
             .insert_root(&mut commands.entity(e), arc);

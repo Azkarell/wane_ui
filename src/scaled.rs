@@ -53,8 +53,8 @@ impl<E: Element> Element for Scale<E> {
     #[inline]
     fn modify_node(&self, node: &mut Node, context: &UiContext) {
         self.content.modify_node(node, context);
-        node.width = node.width * self.scale.x;
-        node.height = node.height * self.scale.y;
+        node.width *= self.scale.x;
+        node.height *= self.scale.y;
     }
 }
 
@@ -68,6 +68,7 @@ impl Scaled {
         self.scale = self.original_scale;
     }
 }
+#[allow(clippy::type_complexity)]
 pub(crate) fn update_computed_size(
     query: Query<
         (&mut ComputedSize, Option<&Scaled>),

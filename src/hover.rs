@@ -23,13 +23,13 @@ pub struct Hover<E: Element> {
 
 impl<E: Element> Hover<E> {
     #[inline]
-    pub fn new<F: Send + Sync, M: 'static>(on_hover: F, content: E) -> Self
+    pub fn new<F, M: 'static>(on_hover: F, content: E) -> Self
     where
-        F: IntoObserverSystem<Insert, Hovered, M> + Copy,
+        F: IntoObserverSystem<Insert, Hovered, M> + Copy + Send + Sync,
     {
         Self {
             on_hover: Box::new(on_hover.into_registration()),
-            content: content,
+            content,
         }
     }
 }

@@ -119,7 +119,7 @@ impl<E: Element> Element for Animated<E> {
     fn create_bundle(&self, context: &crate::UiContext) -> Self::Bundle {
         (
             self.name.clone(),
-            self.animation_id.clone(),
+            self.animation_id,
             AnimatedBy(context.current_animator.expect("No Animator set")),
             self.content.create_bundle(context),
         )
@@ -132,7 +132,7 @@ impl<E: Element> Element for Animated<E> {
         context: &crate::UiContext,
     ) {
         self.content.register_observers(entity_command, context);
-        let animator = context.current_animator.clone().expect("animator exists");
+        let animator = context.current_animator.expect("animator exists");
         let transitions = self.transitions.clone();
         let name = self.name.clone();
         entity_command.observe(

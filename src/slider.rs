@@ -139,6 +139,7 @@ pub fn slider_on_mouse_wheel(on: On<SliderScroll>, mut commands: Commands) {
     });
 }
 
+#[allow(clippy::type_complexity)]
 pub(crate) fn update_slider_style(
     sliders: Query<
         (

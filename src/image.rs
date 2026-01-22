@@ -62,10 +62,16 @@ impl Image<()> {
     pub fn new_with_handle(handle: Handle<UiImage>) -> Self {
         Self {
             content: (),
-            handle: handle,
+            handle,
             rect: None,
             image_mode: NodeImageMode::Auto,
         }
+    }
+}
+
+impl Default for Image<()> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

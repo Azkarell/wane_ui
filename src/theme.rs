@@ -96,7 +96,7 @@ impl<E: Element> Theme<E> {
     #[inline]
     pub fn create_context(&self, other: &UiContext) -> UiContext {
         UiContext {
-            current_animator: other.current_animator.clone(),
+            current_animator: other.current_animator,
             image_color: self.image_color.unwrap_or(other.image_color),
             highlight_color: self.highlight_color.unwrap_or(other.highlight_color),
             font: self.font.clone().unwrap_or(other.font.clone()),
