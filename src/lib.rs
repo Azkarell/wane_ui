@@ -363,6 +363,7 @@ fn move_to_placeholder_target(
             warn!("placeholder target not found");
             continue;
         };
+        info!("placing as child of placeholder");
         commands.entity(e).insert(ChildOf(p));
     }
 }
