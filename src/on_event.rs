@@ -1,6 +1,9 @@
 use std::{marker::PhantomData, sync::Arc};
 
-use bevy::ecs::{event::EntityEvent, system::IntoObserverSystem};
+use bevy::{
+    ecs::{event::EntityEvent, system::IntoObserverSystem},
+    log::info,
+};
 use wane_observers::{EntityObserverRegistration, IntoEntityObserverRegistration};
 
 use crate::{Element, UiContext};
@@ -40,6 +43,7 @@ impl<E: Element, Ev: EntityEvent> Element for OnEvent<E, Ev> {
         context: &UiContext,
     ) {
         self.content.register_observers(entity_command, context);
+        info!("registering_event");
         self.on_event.register_observer(entity_command);
     }
 
