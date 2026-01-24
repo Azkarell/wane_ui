@@ -19,7 +19,7 @@ use bevy::{
     log::{error, info},
 };
 
-use crate::{Element, events::Init};
+use crate::{Element, events::Init, on_event::OnEvent};
 
 pub trait AnimationRegistration {
     fn register(&self, clip: &mut AnimationClip);
@@ -103,6 +103,7 @@ impl AnimationNodes {
 }
 
 #[derive(EntityEvent)]
+#[entity_event(propagate, auto_propagate)]
 struct AfterAnimationGraphInit {
     pub entity: Entity,
 }

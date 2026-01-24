@@ -18,6 +18,7 @@ pub mod grid;
 pub mod hover;
 pub mod image;
 pub mod justified;
+pub mod margin;
 pub mod on_event;
 pub mod padded;
 pub mod placeholder;
