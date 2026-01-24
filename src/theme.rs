@@ -92,6 +92,11 @@ impl<E: Element> Theme<E> {
         self.border_radius = val;
         self
     }
+    #[inline]
+    pub fn with_text_color(mut self, val: Option<Color>) -> Self {
+        self.text_color = val;
+        self
+    }
 
     #[inline]
     pub fn create_context(&self, other: &UiContext) -> UiContext {
