@@ -287,10 +287,7 @@ impl<M: Component + Default> Plugin for MenuPlugin<M> {
 
         app.insert_resource(menu);
         app.add_systems(Update, cleanup::<M>.in_set(UiSystems::Remove));
-        app.configure_sets(
-            Update,
-            (UiSystems::Remove, UiSystems::Add, UiSystems::Finish).chain(),
-        );
+
         app.add_systems(Update, clear_just_added.in_set(UiSystems::Finish));
         if !app.is_plugin_added::<SharedMenuStatePlugin>() {
             app.add_plugins(SharedMenuStatePlugin);
@@ -323,16 +320,24 @@ impl Plugin for SharedMenuStatePlugin {
             Update,
             (
                 update_checkbox_style,
-                (update_placeholder, move_to_placeholder_target).chain(),
+                (update_placeholder, move_to_placeholder_target)
+                    .chain()
+                    .in_set(UiSystems::Add),
             ),
         );
         app.add_systems(
             Update,
-            (update_computed_size, update_node_on_size_change).chain(),
+            (update_computed_size, update_node_on_size_change)
+                .chain()
+                .in_set(UiSystems::Add),
         );
         app.add_systems(
             Update,
             init_resource::<UiContext>.run_if(resource_added::<UiFont>),
+        );
+        app.configure_sets(
+            Update,
+            (UiSystems::Remove, UiSystems::Add, UiSystems::Finish).chain(),
         );
     }
 }
