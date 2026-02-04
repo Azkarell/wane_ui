@@ -19,7 +19,7 @@ use bevy::{
     log::{error, info},
 };
 
-use crate::{Element, events::Init, on_event::OnEvent};
+use crate::{Element, events::Init};
 
 pub trait AnimationRegistration {
     fn register(&self, clip: &mut AnimationClip);

@@ -157,19 +157,19 @@ pub trait Element: Send + Sync {
 
 #[derive(Resource, Clone)]
 pub struct UiContext {
-    font: Handle<Font>,
-    text_size: f32,
-    text_size_big: f32,
-    background_color: Color,
-    foreground_color: Color,
-    hover_color: Color,
-    text_color: Color,
-    border_thickness: UiRect,
-    border_color: BorderColor,
-    border_radius: BorderRadius,
-    highlight_color: Color,
-    image_color: Color,
-    current_animator: Option<Entity>,
+    pub font: Handle<Font>,
+    pub text_size: f32,
+    pub text_size_big: f32,
+    pub background_color: Color,
+    pub foreground_color: Color,
+    pub hover_color: Color,
+    pub text_color: Color,
+    pub border_thickness: UiRect,
+    pub border_color: BorderColor,
+    pub border_radius: BorderRadius,
+    pub highlight_color: Color,
+    pub image_color: Color,
+    pub current_animator: Option<Entity>,
 }
 
 #[derive(Resource)]
