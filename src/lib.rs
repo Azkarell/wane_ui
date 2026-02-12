@@ -55,7 +55,7 @@ use bevy::{
             common_conditions::{resource_added, resource_exists},
         },
         system::{Commands, EntityCommands, Query, Res, ResMut},
-        world::FromWorld,
+        world::{FromWorld, Ref},
     },
     log::{info, warn},
     platform::collections::HashMap,
@@ -360,17 +360,19 @@ fn update_placeholder(
 }
 
 fn move_to_placeholder_target(
-    inserts: Query<(Entity, &InsertPlaceholderTraget), Added<InsertPlaceholderTraget>>,
+    inserts: Query<(Entity, Ref<InsertPlaceholderTraget>)>,
     placeholders: Res<PlaceHolders>,
     mut commands: Commands,
 ) {
     for (e, i) in inserts {
-        let Some(p) = placeholders.get(&i.0).cloned() else {
-            warn!("placeholder target not found");
-            continue;
-        };
-        info!("placing as child of placeholder");
-        commands.entity(e).insert(ChildOf(p));
+        if i.is_added() || placeholders.is_changed() {
+            let Some(p) = placeholders.get(&i.0).cloned() else {
+                warn!("placeholder target not found");
+                continue;
+            };
+            info!("placing as child of placeholder");
+            commands.entity(e).insert(ChildOf(p));
+        }
     }
 }
 
